@@ -1,0 +1,25 @@
+{
+  "name": "elm-sm",
+  "main": "./lib/elm-sm",
+  "version": "0.0.0",
+  "description": "A short description of your package",
+  "keywords": [],
+  "activationCommands": {
+    "atom-workspace": "elm-sm:toggle"
+  },
+  "repository": "https://github.com/atom/elm-sm",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+    "atom-space-pen-views": "^2.0.0",
+    "cheerio": "0.15.0",
+    "fs-plus": "^2.0.0",
+    "highlights": "1.4.1"
+  },
+  "devDependencies": {
+    "electron-prebuilt": "^1.4.6",
+    "electron-rebuild": "^1.3.0"
+  }
+}

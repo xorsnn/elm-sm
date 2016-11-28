@@ -1,0 +1,26 @@
+{
+  "context-menu": {
+    "atom-text-editor": [
+      {
+        "label": "Toggle elm-sm",
+        "command": "elm-sm:toggle"
+      }
+    ]
+  },
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "elm-sm",
+          "submenu": [
+            {
+              "label": "Toggle",
+              "command": "elm-sm:toggle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
