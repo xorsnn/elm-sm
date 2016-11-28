@@ -1,7 +1,7 @@
 {
   "name": "elm-sm",
   "main": "./lib/elm-sm",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "State machine generator",
   "keywords": [],
   "activationCommands": {
