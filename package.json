@@ -2,12 +2,12 @@
   "name": "elm-sm",
   "main": "./lib/elm-sm",
   "version": "0.0.0",
-  "description": "A short description of your package",
+  "description": "State machine generator",
   "keywords": [],
   "activationCommands": {
     "atom-workspace": "elm-sm:toggle"
   },
-  "repository": "https://github.com/atom/elm-sm",
+  "repository": "https://github.com/xorsnn/elm-sm",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
