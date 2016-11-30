@@ -7,14 +7,17 @@ class SmState
     transitions: []
     messages: []
     functions: {}
-    specialFunctions: []
+    specialFunctions: {
+      update: null
+    }
     module: ""
     imports: []
   }
 
   regExps: {
     newStructure: new RegExp("^(\\w)")
-    functions: {re: new RegExp("^((?!(update|view|init|(\\w+View)))\\w+)\ :\ .+"), id: '%1'}
+    functions: {re: new RegExp("^((?!(update|view|init|(\\w+View)))\\w+)\ :\ .+")}
+    updateFunc: {re: new RegExp("^(update)\ :\ .+")}
   }
 
   currentBlock: null
@@ -26,9 +29,15 @@ class SmState
       {name: 'stopReadingCommentMsg', from: 'readingCommentState', to: 'waitingState'},
       {name: 'startReadingFunctionMsg', from: 'waitingState', to: 'readingFunctionState'},
       {name: 'newRootStructureMsg', from: 'readingFunctionState', to: 'waitingState'},
+      {name: 'startReadingUpdateFunctionMsg', from: 'waitingState', to: 'readingUpdateFunctionState'},
+      {name: 'newRootStructureMsg', from: 'readingUpdateFunctionState', to: 'waitingState'},
     ]})
 
   constructor: ->
+    return
+
+  _parseUpateFunction: =>
+
     return
 
   parseLine: (line) =>
@@ -51,7 +60,8 @@ class SmState
           switch @fsm.current
             when "readingFunctionState"
               @structure.functions[@currentBlock.name] = @currentBlock.content
-          console.log @structure
+            when "readingUpdateFunctionState"
+              @structure.specialFunctions.update = @currentBlock.content
           @currentBlock = null
           @fsm.newRootStructureMsg()
 
@@ -65,9 +75,18 @@ class SmState
       }
       @fsm.startReadingFunctionMsg()
 
+    match = line.match(@regExps.updateFunc.re)
+    if match
+      @currentBlock = {
+        name: match[1]
+        content: ''
+      }
+      @fsm.startReadingUpdateFunctionMsg()
 
     switch @fsm.current
       when "readingFunctionState"
+        @currentBlock.content += line + "\n"
+      when "readingUpdateFunctionState"
         @currentBlock.content += line + "\n"
 
     return
