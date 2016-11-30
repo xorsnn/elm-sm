@@ -13,45 +13,22 @@ for i in [0..9]
   positionRe[i] = new RegExp('%' + i, 'g')
 
 SmGenerator = require './sm-generator'
+SmState = require './sm-state'
 
 module.exports =
 class NavParser
   pathObserver: null
   # projectRules: {}
   smGenerator: new SmGenerator()
+  smState: new SmState()
 
   constructor: ->
-    # @getProjectRules atom.project.getPaths()
-    # pathObserver = atom.project.onDidChangePaths (paths) =>
-    #   @getProjectRules paths
-
-
-  # getProjectRules: (paths) ->
-  #   # First remove any project that's been closed
-  #   for projectPath of @projectRules
-  #     if paths.indexOf(projectPath) is -1
-  #       delete @projectRules[projectPath]
-  #   # Now any new project opened.
-  #   for projectPath in paths
-  #     ruleFile = projectPath + path.sep + '.nav-marker-rules'
-  #     # console.log '>>>>>>>>>>>>>>>>>>>>>>>>'
-  #     # console.log ruleFile
-  #     # console.log '>>>>>>>>>>>>>>>>>>>>>>>>'
-  #     if not @projectRules[projectPath]
-  #       do (projectPath) =>
-  #         fs.readFile ruleFile, (err, data) =>
-  #           return unless data
-  #           rulesText = data.toString().split("\n")
-  #           for line in rulesText
-  #             rule = @parseRule(line)
-  #             if rule
-  #               @projectRules[projectPath] ||= []
-  #               @projectRules[projectPath].push rule
-
+    return
 
   parse: ->
     # TODO: FIX THAT, erasing the old one
     @smGenerator = new SmGenerator()
+    @smState = new SmState()
     # parse active editor's text
     items = []
     editor = atom.workspace.getActiveTextEditor()
@@ -62,48 +39,23 @@ class NavParser
     activeRules = langdef.All or []
     markerIndents = []    # indent chars to track parent/children
 
-    # updateRules = (newRule) ->
-    #   console.log '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-    #   console.log newRule
-    #   console.log '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-    #   if newRule.ext
-    #     fileMatches = false
-    #     for ext in newRule.ext
-    #       if editorFile.lastIndexOf(ext) + ext.length is editorFile.length
-    #         fileMatches = true
-    #         break
-    #     return unless fileMatches
-    #   if newRule.startOver
-    #     activeRules = []
-    #   if newRule.disableGroups
-    #     for disableGroup in newRule.disableGroups
-    #       for rule, i in activeRules
-    #         if rule.kind is disableGroup
-    #           activeRules.splice(i, 1)
-    #   if newRule.re
-    #     activeRules.push newRule
-
     prevIndent = 0
     for ext in Object.keys(langmap)
       if editorFile.lastIndexOf(ext) + ext.length is editorFile.length
         activeRules = activeRules.concat(langmap[ext])
         break
 
-    # # incorporate project rules
-    # for projectPath of @projectRules
-    #   console.log '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-    #   console.log projectPath
-    #   console.log '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
-    #   if editorFile.indexOf(projectPath) is 0
-    #     projectRules = @projectRules[projectPath]
-    #     for rule in projectRules
-    #       updateRules(rule)
-
     for row in [0..editor.getLineCount() ]
       lineText = editor.lineTextForBufferRow(row)
+
+      originalLine = lineText
+
       lineText = lineText.trim() if lineText
       continue unless lineText
-      @smGenerator.parseLine(lineText)
+
+      @smGenerator.parseLine(originalLine)
+      @smState.parseLine(originalLine)
+
       if lineText.indexOf('#' + 'marker-rule:') >= 0
         newRule = @parseRule(lineText)
         if newRule
@@ -124,6 +76,7 @@ class NavParser
             parentIndent = markerIndents[markerIndents.length-2]
           items.push @makeItem(rule, match, lineText, row, indent, parentIndent)
     @smGenerator.generate()
+    # @smState.
     return items
 
 
@@ -150,7 +103,6 @@ class NavParser
       , tooltip: tooltip, indent: indent, parentIndent: parentIndent}
 
 
-  # parseRule : to decipher rules in .nav-marker-rules file or within source
   parseRule: (line) ->
     # Should be: '#marker-rule' followed by colon, then by regular expression
     # followed by optional fields separated by ||

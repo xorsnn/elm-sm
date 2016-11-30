@@ -25,6 +25,8 @@ class SmGenerator
 
   _addTransition: (line) =>
     transition = line.replace("[", "").replace("]", "").split(',')
+    if transition.length < 3
+      return
     @transitions.push({
       from: transition[0].trim()
       to: transition[2].trim()
@@ -132,10 +134,10 @@ class SmGenerator
       if line isnt "]" and line isnt "["
         @_addTransition(line)
 
-    console.log @toString()
+    # console.log @toString()
     return
 
   inputGenerated: (editor) =>
-    console.log @toString()
+    # console.log @toString()
     if (editor)
       editor.insertText(@toString())

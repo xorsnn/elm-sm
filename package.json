@@ -16,7 +16,8 @@
     "atom-space-pen-views": "^2.0.0",
     "cheerio": "0.15.0",
     "fs-plus": "^2.0.0",
-    "highlights": "1.4.1"
+    "highlights": "1.4.1",
+    "javascript-state-machine": "^2.4.0"
   },
   "devDependencies": {
     "electron-prebuilt": "^1.4.6",

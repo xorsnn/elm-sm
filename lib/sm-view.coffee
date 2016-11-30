@@ -42,14 +42,7 @@ class NavView extends ResizableWidthView
     $(html).appendTo(@mainView)
     @view = @mainView.find('.sm-view')
     @view.on 'click', '.list-item', (event) =>
-      # console.log '************************'
-      # console.log event
-      # console.log '************************'
       elem = event.currentTarget
-      console.log '************************'
-      console.log elem
-      console.log elem.markerId
-      console.log '************************'
       if elem.markerId
         if $(event.target).hasClass('icon')
           @toggleHighlight(elem)
@@ -62,12 +55,10 @@ class NavView extends ResizableWidthView
     @toolPanel.on 'click', 'button', (event) =>
       elem = event.currentTarget
       editor = atom.workspace.getActiveTextEditor()
-
-      console.log @parser.smGenerator.toString()
       @parser.smGenerator.inputGenerated(editor)
-      # console.log 'AAAAAAAAAAAAAAAAAAAAAAAA'
-      # console.log elem
-      # console.log elem.markerId
+      # TODO: testing inserting block
+      # fu = @parser.smState.structure.functions[Object.keys(@parser.smState.structure.functions)[0]]
+      # editor.insertText(fu)
       return
 
 
