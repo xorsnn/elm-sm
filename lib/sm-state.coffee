@@ -43,11 +43,13 @@ class SmState
   parseLine: (line) =>
 
     # NOTE: handle multiline comments
-    if line.trim().indexOf('{-') is 0
-      @fsm.startReadingCommentMsg()
+    if @fsm.can('startReadingCommentMsg')
+      if line.trim().indexOf('{-') is 0
+        @fsm.startReadingCommentMsg()
 
-    if line.trim().indexOf('-}') is 0
-      @fsm.stopReadingCommentMsg()
+    if @fsm.can('stopReadingCommentMsg')
+      if line.trim().indexOf('-}') is 0
+        @fsm.stopReadingCommentMsg()
 
     # NOTE: handle single line comments
     if line.trim().indexOf('--') is 0
@@ -56,14 +58,15 @@ class SmState
     # reset if new structure starting
     if @fsm.can('newRootStructureMsg')
       if line.match(@regExps.newStructure)
-        if line.trim().indexOf(@currentBlock.name) isnt 0
-          switch @fsm.current
-            when "readingFunctionState"
-              @structure.functions[@currentBlock.name] = @currentBlock.content
-            when "readingUpdateFunctionState"
-              @structure.specialFunctions.update = @currentBlock.content
-          @currentBlock = null
-          @fsm.newRootStructureMsg()
+        if @currentBlock
+          if line.trim().indexOf(@currentBlock.name) isnt 0
+            switch @fsm.current
+              when "readingFunctionState"
+                @structure.functions[@currentBlock.name] = @currentBlock.content
+              when "readingUpdateFunctionState"
+                @structure.specialFunctions.update = @currentBlock.content
+            @currentBlock = null
+            @fsm.newRootStructureMsg()
 
 
     #NOTE: reading functions
