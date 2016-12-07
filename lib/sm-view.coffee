@@ -55,7 +55,10 @@ class NavView extends ResizableWidthView
     @toolPanel.on 'click', 'button', (event) =>
       elem = event.currentTarget
       editor = atom.workspace.getActiveTextEditor()
-      @parser.smGenerator.inputGenerated(editor)
+      # @parser.smGenerator.inputGenerated(editor)
+      transitions = @parser.smState._parseUpateFunction()
+      for transition in transitions
+        console.log transition
       # TODO: testing inserting block
       # fu = @parser.smState.structure.functions[Object.keys(@parser.smState.structure.functions)[0]]
       # editor.insertText(fu)

@@ -37,8 +37,47 @@ class SmState
     return
 
   _parseUpateFunction: =>
+    lines = @structure.specialFunctions.update.split('\n')
+    lineCheckRegExp = new RegExp("^\ *(\\S)")
+    caseStartRegExp = new RegExp("case\ +\\(.+\,.+\\)\ +of")
+    transitionHeaderRegExp = new RegExp("\\(\ *(\\w+State)\ *\,\ *(\\w+Msg)\.*\\)\ *\-\>")
+    # transitionFinRegExp = new RegExp("\\{\ *model\ *\\|\ *state\ *\=\ *(\\w+)\\}")
+    transitionFinRegExp = new RegExp("\\{.+\\|.*state\\ *\\=\\ *(\\w+State).*\\}")
 
-    return
+    getIndent = (line) ->
+      match = line.match(lineCheckRegExp)
+      return line.indexOf(match[0].trim())
+
+    parseUpdate = (lines, indent = '', transitions = [], state = null) ->
+      unless lines.length is 0
+        line = lines.shift()
+        if line.trim() isnt "" and line.trim().indexOf("--") is -1
+          match = line.match(transitionHeaderRegExp)
+          transitionFinMatch = line.match(transitionFinRegExp)
+
+          if transitionFinMatch and state
+            state.transition.to = transitionFinMatch[1]
+
+          if match
+            if state
+              transitions.push(state.transition)
+              state = null
+
+            state = {
+              indent: indent
+              match: match
+              transition: {
+                from: match[1]
+                msg: match[2]
+                to: null
+              }
+            }
+
+        return parseUpdate(lines, indent, transitions, state)
+      else
+        return transitions
+
+    return parseUpdate(lines)
 
   parseLine: (line) =>
 
