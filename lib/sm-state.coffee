@@ -16,8 +16,9 @@ class SmState
 
   regExps: {
     newStructure: new RegExp("^(\\w)")
-    functions: {re: new RegExp("^((?!(update|view|init|(\\w+View)))\\w+)\ :\ .+")}
-    updateFunc: {re: new RegExp("^(update)\ :\ .+")}
+    functions: new RegExp("^((?!(update|view|init|(\\w+View)))\\w+)\ :\ .+")
+    updateFunc: new RegExp("^(update)\ :\ .+")
+    moduleRegExp: new RegExp("^module\\ .+\\ exposing\\ .+")
   }
 
   currentBlock: null
@@ -25,13 +26,14 @@ class SmState
   fsm: StateMachine.create({
     initial: 'waitingState',
     events: [
-      {name: 'startReadingCommentMsg', from: 'waitingState', to: 'readingCommentState'},
-      {name: 'stopReadingCommentMsg', from: 'readingCommentState', to: 'waitingState'},
-      {name: 'startReadingFunctionMsg', from: 'waitingState', to: 'readingFunctionState'},
-      {name: 'newRootStructureMsg', from: 'readingFunctionState', to: 'waitingState'},
-      {name: 'startReadingUpdateFunctionMsg', from: 'waitingState', to: 'readingUpdateFunctionState'},
-      {name: 'newRootStructureMsg', from: 'readingUpdateFunctionState', to: 'waitingState'},
-    ]})
+      { name: 'startReadingCommentMsg', from: 'waitingState', to: 'readingCommentState' } ,
+      { name: 'stopReadingCommentMsg', from: 'readingCommentState', to: 'waitingState' } ,
+      { name: 'startReadingFunctionMsg', from: 'waitingState', to: 'readingFunctionState' } ,
+      { name: 'newRootStructureMsg', from: 'readingFunctionState', to: 'waitingState' } ,
+      { name: 'startReadingUpdateFunctionMsg', from: 'waitingState', to: 'readingUpdateFunctionState' } ,
+      { name: 'newRootStructureMsg', from: 'readingUpdateFunctionState', to: 'waitingState' } ,
+      { name: 'readModuleString', from: 'waitingState', to: 'readingModuleString' } ,
+    ] } )
 
   constructor: ->
     return
@@ -40,8 +42,7 @@ class SmState
     lines = @structure.specialFunctions.update.split('\n')
     lineCheckRegExp = new RegExp("^\ *(\\S)")
     caseStartRegExp = new RegExp("case\ +\\(.+\,.+\\)\ +of")
-    transitionHeaderRegExp = new RegExp("\\(\ *(\\w+State).*\,\ *(\\w+Msg)\.*\\)\ *\-\>")
-    # transitionFinRegExp = new RegExp("\\{\ *model\ *\\|\ *state\ *\=\ *(\\w+)\\}")
+    transitionHeaderRegExp = new RegExp("\\(\ *(\\w+State).*\,\ *([A-Z]\\w+)\.*\\)\ *\-\>")
     transitionFinRegExp = new RegExp("\\{.+\\|.*state\\ *\\=\\ *(\\w+State).*\\}")
 
     getIndent = (line) ->
@@ -51,7 +52,7 @@ class SmState
     parseUpdate = (lines, indent = '', transitions = [], state = null) ->
       unless lines.length is 0
         line = lines.shift()
-        if line.trim() isnt "" and line.trim().indexOf("--") is -1
+        if line.trim() isnt "" and line.trim().indexOf("--") is - 1
           match = line.match(transitionHeaderRegExp)
           transitionFinMatch = line.match(transitionFinRegExp)
 
@@ -79,7 +80,18 @@ class SmState
 
     return parseUpdate(lines)
 
-  parseLine: (line) =>
+  generateComment: (transitions) ->
+    res = '{-\n'
+    res += 'TRANSITION DIAGRAM\n'
+    res += '{\n'
+    for transition in transitions
+      res += '[ ' + transition.from + ', ' + transition.msg + ', ' + transition.to + ' ]\n'
+    res += '}\n'
+    res += '-}\n'
+    return res
+
+  parseLine: (line, row) =>
+    # console.log "row > " + row
 
     # NOTE: handle multiline comments
     if @fsm.can('startReadingCommentMsg')
@@ -109,7 +121,7 @@ class SmState
 
 
     #NOTE: reading functions
-    match = line.match(@regExps.functions.re)
+    match = line.match(@regExps.functions)
     if match
       @currentBlock = {
         name: match[1]
@@ -117,13 +129,18 @@ class SmState
       }
       @fsm.startReadingFunctionMsg()
 
-    match = line.match(@regExps.updateFunc.re)
+    match = line.match(@regExps.updateFunc)
     if match
       @currentBlock = {
         name: match[1]
         content: ''
       }
       @fsm.startReadingUpdateFunctionMsg()
+
+    match = line.match(@regExps.moduleRegExp)
+    if match
+      console.log ">>>>>>>>>>>>>>>>>>>>>.."
+      console.log line
 
     switch @fsm.current
       when "readingFunctionState"
