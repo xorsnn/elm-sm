@@ -268,16 +268,10 @@ class NavView extends ResizableWidthView
 
 
   gotoMarker: (markerId) ->
-    console.log '>> >> 1'
-    console.log markerId
     editor = atom.workspace.getActiveTextEditor()
     marker = editor.getMarker(markerId)
-    console.log marker
     return unless marker
     row = marker.getStartBufferPosition() # TODO check .row
-    console.log 'row:'
-    console.log row
-    console.log Object.keys(row)
     editor.unfoldBufferRow(row.row)
     editor.setCursorBufferPosition(row)
     editor.scrollToCursorPosition()

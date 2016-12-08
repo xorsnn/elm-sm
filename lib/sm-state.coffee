@@ -40,7 +40,7 @@ class SmState
     lines = @structure.specialFunctions.update.split('\n')
     lineCheckRegExp = new RegExp("^\ *(\\S)")
     caseStartRegExp = new RegExp("case\ +\\(.+\,.+\\)\ +of")
-    transitionHeaderRegExp = new RegExp("\\(\ *(\\w+State)\ *\,\ *(\\w+Msg)\.*\\)\ *\-\>")
+    transitionHeaderRegExp = new RegExp("\\(\ *(\\w+State).*\,\ *(\\w+Msg)\.*\\)\ *\-\>")
     # transitionFinRegExp = new RegExp("\\{\ *model\ *\\|\ *state\ *\=\ *(\\w+)\\}")
     transitionFinRegExp = new RegExp("\\{.+\\|.*state\\ *\\=\\ *(\\w+State).*\\}")
 
