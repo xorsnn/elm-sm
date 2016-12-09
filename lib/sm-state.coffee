@@ -45,14 +45,14 @@ class SmState
         { name: 'newRootStructureMsg', from: 'readingUpdateFunctionState', to: 'waitingState' } ,
         { name: 'readModuleString', from: 'waitingState', to: 'readingModuleString' } ,
       ] } )
-      
+
     return
 
   _parseUpateFunction: =>
     lines = @structure.specialFunctions.update.split('\n')
     lineCheckRegExp = new RegExp("^\ *(\\S)")
     caseStartRegExp = new RegExp("case\ +\\(.+\,.+\\)\ +of")
-    transitionHeaderRegExp = new RegExp("\\(\ *(\\w+State).*\,\ *([A-Z]\\w+)\.*\\)\ *\-\>")
+    transitionHeaderRegExp = new RegExp("\\(\ *(\\w+State).*\,\ *([A-Z]\\w+)(\\ +\\(\\ *[Ok|Err].*\\ *\\))?\.*\\)\ *\-\>")
     transitionFinRegExp = new RegExp("\\{.+\\|.*state\\ *\\=\\ *(\\w+State).*\\}")
 
     getIndent = (line) ->
@@ -74,12 +74,19 @@ class SmState
               transitions.push(state.transition)
               state = null
 
+            msg = match[2]
+            if match[3]
+              if match[3].indexOf('Ok') isnt -1
+                msg += ' Ok'
+              if match[3].indexOf('Err') isnt -1
+                msg += ' Err'
+
             state = {
               indent: indent
               match: match
               transition: {
                 from: match[1]
-                msg: match[2]
+                msg: msg
                 to: null
               }
             }
