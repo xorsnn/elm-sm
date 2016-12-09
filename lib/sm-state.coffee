@@ -2,40 +2,50 @@ StateMachine = require 'javascript-state-machine'
 
 module.exports =
 class SmState
-  structure: {
-    states: []
-    transitions: []
-    messages: []
-    functions: {}
-    specialFunctions: {
-      update: null
-    }
-    module: ""
-    imports: []
-  }
 
   regExps: {
     newStructure: new RegExp("^(\\w)")
     functions: new RegExp("^((?!(update|view|init|(\\w+View)))\\w+)\ :\ .+")
     updateFunc: new RegExp("^(update)\ :\ .+")
     moduleRegExp: new RegExp("^module\\ .+\\ exposing\\ .+")
+    transitionDiagramHeaderRegExp: new RegExp("TRANSITION DIAGRAM")
   }
 
-  currentBlock: null
+  # CONST
+  BLOCK_TYPES: ['MULTILINE_COMMENT', 'SINGLE_LINE_COMMENT', 'UPDATE_FUNCTION']
+  MULTILINE_COMMENT: 0
+  SINGLE_LINE_COMMENT: 1
+  UPDATE_FUNCTION: 2
 
-  fsm: StateMachine.create({
-    initial: 'waitingState',
-    events: [
-      { name: 'startReadingCommentMsg', from: 'waitingState', to: 'readingCommentState' } ,
-      { name: 'stopReadingCommentMsg', from: 'readingCommentState', to: 'waitingState' } ,
-      { name: 'startReadingFunctionMsg', from: 'waitingState', to: 'readingFunctionState' } ,
-      { name: 'newRootStructureMsg', from: 'readingFunctionState', to: 'waitingState' } ,
-      { name: 'startReadingUpdateFunctionMsg', from: 'waitingState', to: 'readingUpdateFunctionState' } ,
-      { name: 'newRootStructureMsg', from: 'readingUpdateFunctionState', to: 'waitingState' } ,
-      { name: 'readModuleString', from: 'waitingState', to: 'readingModuleString' } ,
-    ] } )
 
   constructor: ->
+    @structure = {
+      states: []
+      transitions: []
+      messages: []
+      functions: {}
+      specialFunctions: {
+        update: null
+      }
+      module: ""
+      imports: []
+      transitionTable: null
+    }
+    @currentBlock = null
+    @fsm = StateMachine.create({
+      initial: 'waitingState',
+      events: [
+        { name: 'startReadingCommentMsg', from: 'waitingState', to: 'readingCommentState' } ,
+        { name: 'startReadingTransitionDiagramMsg', from: 'readingCommentState', to: 'readingTransitionDiagram' } ,
+        { name: 'stopReadingTransitionDiagramMsg', from: 'readingTransitionDiagram', to: 'readingCommentState' } ,
+        { name: 'stopReadingCommentMsg', from: 'readingCommentState', to: 'waitingState' } ,
+        { name: 'startReadingFunctionMsg', from: 'waitingState', to: 'readingFunctionState' } ,
+        { name: 'newRootStructureMsg', from: 'readingFunctionState', to: 'waitingState' } ,
+        { name: 'startReadingUpdateFunctionMsg', from: 'waitingState', to: 'readingUpdateFunctionState' } ,
+        { name: 'newRootStructureMsg', from: 'readingUpdateFunctionState', to: 'waitingState' } ,
+        { name: 'readModuleString', from: 'waitingState', to: 'readingModuleString' } ,
+      ] } )
+      
     return
 
   _parseUpateFunction: =>
@@ -80,27 +90,47 @@ class SmState
 
     return parseUpdate(lines)
 
-  generateComment: (transitions) ->
-    res = '{-\n'
+  generateComment: (transitions, comment = true) ->
+    res = ''
+    res += '{-\n' if comment
     res += 'TRANSITION DIAGRAM\n'
     res += '{\n'
     for transition in transitions
       res += '[ ' + transition.from + ', ' + transition.msg + ', ' + transition.to + ' ]\n'
     res += '}\n'
-    res += '-}\n'
+    res += '-}\n' if comment
     return res
 
   parseLine: (line, row) =>
-    # console.log "row > " + row
 
     # NOTE: handle multiline comments
     if @fsm.can('startReadingCommentMsg')
       if line.trim().indexOf('{-') is 0
+        @currentBlock = {
+          blockType: @MULTILINE_COMMENT
+          startRow: row
+        }
         @fsm.startReadingCommentMsg()
 
     if @fsm.can('stopReadingCommentMsg')
       if line.trim().indexOf('-}') is 0
+        @currentBlock.content += line + '\n'
+        @currentBlock.lastRow = row
+        @currentBlock = null
         @fsm.stopReadingCommentMsg()
+
+    if @fsm.can('startReadingTransitionDiagramMsg')
+      if line.match(@regExps.transitionDiagramHeaderRegExp)
+        @structure.transitionTable = {
+          startRow: row
+        }
+        @fsm.startReadingTransitionDiagramMsg()
+
+    if @fsm.can('stopReadingTransitionDiagramMsg')
+      if line.indexOf('}') isnt -1
+        @structure.transitionTable.content += line + '\n'
+        @structure.transitionTable.lastRow = row
+        @fsm.stopReadingTransitionDiagramMsg()
 
     # NOTE: handle single line comments
     if line.trim().indexOf('--') is 0
@@ -120,7 +150,7 @@ class SmState
             @fsm.newRootStructureMsg()
 
 
-    #NOTE: reading functions
+    # NOTE: reading functions
     match = line.match(@regExps.functions)
     if match
       @currentBlock = {
@@ -132,20 +162,29 @@ class SmState
     match = line.match(@regExps.updateFunc)
     if match
       @currentBlock = {
+        blockType: @UPDATE_FUNCTION
         name: match[1]
         content: ''
       }
       @fsm.startReadingUpdateFunctionMsg()
 
     match = line.match(@regExps.moduleRegExp)
+
     if match
       console.log ">>>>>>>>>>>>>>>>>>>>>.."
       console.log line
 
     switch @fsm.current
       when "readingFunctionState"
-        @currentBlock.content += line + "\n"
+        @currentBlock.content += line + '\n'
       when "readingUpdateFunctionState"
-        @currentBlock.content += line + "\n"
+        @currentBlock.content += line + '\n'
+      when "readingCommentState"
+        @currentBlock.content += line + '\n'
+      when "readingTransitionDiagram"
+        # if line.indexOf('{') isnt -1
+        #   @structure.transitionTable.startRow = row
+        @structure.transitionTable.content += line + '\n'
+        @currentBlock.content += line + '\n'
 
     return

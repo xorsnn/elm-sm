@@ -2,8 +2,13 @@
   "context-menu": {
     "atom-text-editor": [
       {
-        "label": "Toggle elm-sm",
-        "command": "elm-sm:toggle"
+        "label": "elm-sm",
+        "submenu": [
+          {
+            "label": "Generate SM diagram",
+            "command": "elm-sm:generateDigaram"
+          }
+        ]
       }
     ]
   },
@@ -15,8 +20,8 @@
           "label": "elm-sm",
           "submenu": [
             {
-              "label": "Toggle",
-              "command": "elm-sm:toggle"
+              "label": "Generate SM diagram",
+              "command": "elm-sm:generateDigaram"
             }
           ]
         }

@@ -5,7 +5,7 @@
   "description": "State machine generator",
   "keywords": [],
   "activationCommands": {
-    "atom-workspace": "elm-sm:toggle"
+    "atom-workspace": "elm-sm:generateDigaram"
   },
   "repository": "https://github.com/xorsnn/elm-sm",
   "license": "MIT",

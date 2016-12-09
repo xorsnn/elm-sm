@@ -1,5 +1,5 @@
 {
   "atom-workspace": {
-    "ctrl-alt-o": "elm-sm:toggle"
+    "ctrl-alt-o": "elm-sm:generateDigaram"
   }
 }
