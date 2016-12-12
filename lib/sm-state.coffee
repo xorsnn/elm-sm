@@ -93,6 +93,8 @@ class SmState
 
         return parseUpdate(lines, indent, transitions, state)
       else
+        if state
+          transitions.push(state.transition)
         return transitions
 
     return parseUpdate(lines)
@@ -177,9 +179,6 @@ class SmState
 
     match = line.match(@regExps.moduleRegExp)
 
-    if match
-      console.log ">>>>>>>>>>>>>>>>>>>>>.."
-      console.log line
 
     switch @fsm.current
       when "readingFunctionState"
